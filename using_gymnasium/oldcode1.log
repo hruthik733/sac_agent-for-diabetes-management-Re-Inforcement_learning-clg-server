@@ -1,0 +1,10 @@
+/home/jupyter-228w1a12b4/Hruthik/using_gymnasium/gymnasium_env/lib/python3.12/site-packages/gym/envs/registration.py:2: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+Using device: cuda
+==================================================
+
+==================================================
+--- Starting Training for Patient: adult#001 ---
+==================================================
+Episode 50/200 | Reward: -1377.02
+Episode 100/200 | Reward: 782.74

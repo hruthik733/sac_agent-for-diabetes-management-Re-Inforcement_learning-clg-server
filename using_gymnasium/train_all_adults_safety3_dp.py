@@ -372,6 +372,8 @@ def train_and_evaluate_patient(patient_name, gpu_id, seed, hyperparameters):
     # =================================================================
     print(f"--- Starting Training for Patient: {patient_name} on {device} ---")
     total_timesteps_taken = 0
+    training_rewards_history = [] # <-- ADDED: To store rewards for learning curve
+
     for i_episode in range(1, max_episodes + 1):
         obs_array, info = env.reset(seed=seed + i_episode)
         episode_scenario = info.get('scenario')
@@ -415,6 +417,7 @@ def train_and_evaluate_patient(patient_name, gpu_id, seed, hyperparameters):
             if done:
                 break
         
+        training_rewards_history.append(episode_reward) # <-- ADDED: Store reward
         if i_episode % 50 == 0:
             print(f"[{patient_name} on {device}] Episode {i_episode}/{max_episodes} | Reward: {episode_reward:.2f}")
     
@@ -423,10 +426,28 @@ def train_and_evaluate_patient(patient_name, gpu_id, seed, hyperparameters):
     torch.save(agent.actor.state_dict(), actor_path)
     print(f"Saved trained model to {actor_path}")
 
+    # ###################################################################### #
+    # ############# NEW: PLOT INDIVIDUAL LEARNING CURVE ############# #
+    # ###################################################################### #
+    plt.figure(figsize=(12, 6))
+    plt.plot(training_rewards_history, label='Episode Reward', alpha=0.6)
+    # Plot a moving average to see the trend more clearly
+    moving_avg = pd.Series(training_rewards_history).rolling(window=20, min_periods=1).mean()
+    plt.plot(moving_avg, label='Moving Average (20 episodes)', color='red', linewidth=2)
+    plt.title(f'Learning Curve for {patient_name}')
+    plt.xlabel('Episode')
+    plt.ylabel('Cumulative Reward')
+    plt.legend()
+    plt.grid(True)
+    learning_curve_path = f'{results_dir}/learning_curve_{clean_patient_name}.png'
+    plt.savefig(learning_curve_path)
+    plt.close()
+    print(f"Saved learning curve plot to {learning_curve_path}")
 
-    # 3. EVALUATION LOOP
+    # 3. EVALUATION LOOP (Unchanged)
     # =================================================================
     print(f"\n--- Starting Evaluation for {patient_name} ---")
+    # ... (evaluation code is the same as before)
     meal_times = [7 * 60, 12 * 60, 18 * 60]
     meal_carbs = [45, 70, 80]
     eval_scenario = CustomScenario(start_time=start_time, scenario=list(zip(meal_times, meal_carbs)))
@@ -451,7 +472,9 @@ def train_and_evaluate_patient(patient_name, gpu_id, seed, hyperparameters):
     upcoming_carbs = eval_scenario.get_action(current_sim_time).meal if eval_scenario else 0
     unnormalized_state = manager.get_full_state(obs_array[0], upcoming_carbs)
     current_state = manager.get_normalized_state(unnormalized_state)
+    
     glucose_history = [obs_array[0]]
+    eval_insulin_history = []
 
     for t in range(max_timesteps_per_episode):
         with torch.no_grad():
@@ -460,7 +483,7 @@ def train_and_evaluate_patient(patient_name, gpu_id, seed, hyperparameters):
         insulin_dose = i_max * np.exp(ETA * (raw_action - 1.0))
         safe_action = safety_layer.apply(insulin_dose, unnormalized_state)
         
-        manager.insulin_history.append(safe_action[0])
+        eval_insulin_history.append(safe_action[0])
         obs_array, _, terminated, truncated, _ = eval_env.step(safe_action)
 
         current_sim_time = eval_env.unwrapped.env.env.time
@@ -473,46 +496,61 @@ def train_and_evaluate_patient(patient_name, gpu_id, seed, hyperparameters):
             break
             
     eval_env.close()
-    
-    # Generate and save individual plot
-    plt.figure(figsize=(15, 6))
+
+    # (Dual-Axis Plotting section is unchanged)
     time_axis_minutes = np.arange(len(glucose_history)) * 5
-    plt.plot(time_axis_minutes, glucose_history, label='SAC Agent Glucose')
-    plt.axhline(y=180, color='r', linestyle=':', label='Hyper Threshold')
-    plt.axhline(y=70, color='orange', linestyle=':', label='Hypo Threshold')
-    
+    if len(eval_insulin_history) != len(glucose_history):
+       eval_insulin_history.append(0)
+
+    fig, ax1 = plt.subplots(figsize=(15, 7))
+    color = 'tab:blue'
+    ax1.set_xlabel('Time (minutes)', fontsize=12)
+    ax1.set_ylabel('Blood Glucose (mg/dL)', color=color, fontsize=12)
+    ax1.plot(time_axis_minutes, glucose_history, color=color, label='Blood Glucose')
+    ax1.tick_params(axis='y', labelcolor=color)
+    ax1.grid(which='major', axis='y', linestyle='--', alpha=0.7)
+    ax1.axhline(y=180, color='r', linestyle=':', label='Hyper Threshold (180)')
+    ax1.axhline(y=70, color='orange', linestyle=':', label='Hypo Threshold (70)')
+    ax2 = ax1.twinx()
+    color = 'tab:gray'
+    ax2.set_ylabel('Insulin Dose (U / 5min)', color=color, fontsize=12)
+    ax2.bar(time_axis_minutes, eval_insulin_history, width=5, color=color, alpha=0.6, label='Insulin Dose')
+    ax2.tick_params(axis='y', labelcolor=color)
     meal_labels_seen = set()
     for meal_time, meal_amount in zip(meal_times, meal_carbs):
         label = f'Meal ({meal_amount}g)'
         if label not in meal_labels_seen:
-            plt.axvline(x=meal_time, color='black', linestyle='--', label=label)
+            ax1.axvline(x=meal_time, color='black', linestyle='--', label=label)
             meal_labels_seen.add(label)
         else:
-            plt.axvline(x=meal_time, color='black', linestyle='--')
-
-    plt.title(f'Performance for {patient_name}')
-    plt.xlabel('Time (minutes)')
-    plt.ylabel('Blood Glucose (mg/dL)')
-    plt.legend()
-    plt.grid(True)
+            ax1.axvline(x=meal_time, color='black', linestyle='--')
+    fig.suptitle(f'Performance for {patient_name}', fontsize=16, weight='bold')
+    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+    h1, l1 = ax1.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()
+    ax1.legend(h1 + h2, l1 + l2, loc='upper left')
     plot_path = f'{results_dir}/evaluation_plot_{clean_patient_name}.png'
     plt.savefig(plot_path)
     plt.close()
     print(f"Saved evaluation plot to {plot_path}")
-
-    # Calculate metrics and return results for aggregation
+    
+    # (Metric calculation is unchanged)
     glucose_history = np.array(glucose_history)
     time_in_range = np.sum((glucose_history >= 70) & (glucose_history <= 180)) / len(glucose_history) * 100
     time_hypo = np.sum(glucose_history < 70) / len(glucose_history) * 100
     time_hyper = np.sum(glucose_history > 180) / len(glucose_history) * 100
     mean_glucose = np.mean(glucose_history)
 
+    # Return both evaluation metrics and training rewards
     return {
-        "Patient": patient_name,
-        "Mean Glucose (mg/dL)": mean_glucose,
-        "Time in Range (%)": time_in_range,
-        "Time Hypo (%)": time_hypo,
-        "Time Hyper (%)": time_hyper,
+        "eval_metrics": {
+            "Patient": patient_name,
+            "Mean Glucose (mg/dL)": mean_glucose,
+            "Time in Range (%)": time_in_range,
+            "Time Hypo (%)": time_hypo,
+            "Time Hyper (%)": time_hyper,
+        },
+        "training_rewards": training_rewards_history
     }
 
 if __name__ == '__main__':
@@ -554,7 +592,12 @@ if __name__ == '__main__':
     # 4. AGGREGATE, DISPLAY, AND PLOT FINAL RESULTS
     # =================================================================
     if results:
-        results_df = pd.DataFrame(results)
+        # Separate evaluation metrics from training rewards
+        eval_results = [res['eval_metrics'] for res in results]
+        training_rewards_list = [res['training_rewards'] for res in results]
+
+        # --- Display Evaluation Summary Table (same as before) ---
+        results_df = pd.DataFrame(eval_results)
         column_order = [
             "Patient", "Mean Glucose (mg/dL)", "Time in Range (%)",
             "Time Hypo (%)", "Time Hyper (%)"
@@ -564,66 +607,84 @@ if __name__ == '__main__':
 
         print("\n" + "="*70)
         print("--- OVERALL EVALUATION SUMMARY ---")
+        # ... (rest of the summary printing is the same)
         print("="*70)
-
         print("\n--- Performance per Patient ---")
         print(results_df.to_string(index=False))
-
         print("\n\n--- Average Performance Across All Patients ---")
         print(f"Mean Glucose (mg/dL): {average_metrics['Mean Glucose (mg/dL)']:.2f}")
         print(f"Time in Range (%):    {average_metrics['Time in Range (%)']:.2f}")
         print(f"Time Hypo (%):        {average_metrics['Time Hypo (%)']:.2f}")
         print(f"Time Hyper (%):       {average_metrics['Time Hyper (%)']:.2f}")
-        
         summary_path = os.path.join(results_dir, 'overall_summary.csv')
         results_df.to_csv(summary_path, index=False, float_format='%.2f')
         print(f"\n✅ Saved overall summary table to {summary_path}")
         print("\n" + "="*70)
 
-        # ############################################################### #
-        # ############# NEW SECTION: OVERALL SUMMARY PLOT ############# #
-        # ############################################################### #
+        # --- Display Overall Summary Plot (same as before) ---
+        # ... (code for the stacked bar chart is the same)
         print("\n--- Generating Overall Summary Plot ---")
         try:
-            # Set 'Patient' as the index for plotting
             plot_data = results_df.set_index('Patient')
-
-            # Select only the percentage columns for the stacked bar chart
             time_metrics_df = plot_data[['Time in Range (%)', 'Time Hypo (%)', 'Time Hyper (%)']]
-            
-            # Create the stacked bar chart
             ax = time_metrics_df.plot(
-                kind='bar',
-                stacked=True,
-                figsize=(16, 9),
+                kind='bar', stacked=True, figsize=(16, 9),
                 color={'Time in Range (%)': 'green', 'Time Hypo (%)': 'orange', 'Time Hyper (%)': 'red'},
-                edgecolor='black',
-                width=0.8
+                edgecolor='black', width=0.8
             )
-            
-            # --- Formatting the plot for clarity ---
             plt.title('Glycemic Control Summary Across All Patients', fontsize=18, weight='bold')
             plt.ylabel('Percentage of Time (%)', fontsize=14)
             plt.xlabel('Patient ID', fontsize=14)
-            plt.xticks(rotation=45, ha='right', fontsize=12) # Rotate labels for better readability
+            plt.xticks(rotation=45, ha='right', fontsize=12)
             plt.yticks(fontsize=12)
-            plt.ylim(0, 100) # Y-axis from 0 to 100%
+            plt.ylim(0, 100)
             plt.grid(axis='y', linestyle='--', alpha=0.7)
-            
-            # Add a horizontal line for the 70% TIR target
             plt.axhline(y=70, color='blue', linestyle='--', label='70% Time in Range Target')
-            
             plt.legend(title='Glycemic Range', bbox_to_anchor=(1.02, 1), loc='upper left')
-            plt.tight_layout() # Adjust layout to prevent labels/legend overlapping
-            
-            # Save the figure
+            plt.tight_layout()
             summary_plot_path = os.path.join(results_dir, 'overall_summary_plot.png')
             plt.savefig(summary_plot_path)
             plt.close()
             print(f"✅ Saved overall summary plot to {summary_plot_path}")
-
         except Exception as e:
             print(f"\n⚠️ Could not generate summary plot. Error: {e}")
+
+        # ############################################################### #
+        # ########### NEW: PLOT OVERALL AVERAGE LEARNING CURVE ########## #
+        # ############################################################### #
+        print("\n--- Generating Overall Average Learning Curve ---")
+        try:
+            # Create a DataFrame from the list of rewards, transposing it
+            rewards_df = pd.DataFrame(training_rewards_list).T
+            
+            # Calculate mean and standard deviation across patients for each episode
+            mean_rewards = rewards_df.mean(axis=1)
+            std_rewards = rewards_df.std(axis=1)
+
+            plt.figure(figsize=(12, 6))
+            plt.plot(mean_rewards, label='Mean Episode Reward', color='blue')
+            # Fill the area between mean +/- one standard deviation
+            plt.fill_between(
+                rewards_df.index,
+                mean_rewards - std_rewards,
+                mean_rewards + std_rewards,
+                color='blue',
+                alpha=0.2,
+                label='Standard Deviation'
+            )
+            plt.title('Overall Average Learning Curve Across All Patients')
+            plt.xlabel('Episode')
+            plt.ylabel('Cumulative Reward')
+            plt.legend()
+            plt.grid(True)
+
+            overall_lc_path = os.path.join(results_dir, 'overall_learning_curve.png')
+            plt.savefig(overall_lc_path)
+            plt.close()
+            print(f"✅ Saved overall average learning curve to {overall_lc_path}")
+
+        except Exception as e:
+            print(f"\n⚠️ Could not generate overall learning curve. Error: {e}")
 
     else:
         print("\n⚠️ No results were generated to summarize.")

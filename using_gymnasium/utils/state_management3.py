@@ -5,7 +5,7 @@ from scipy.stats import gamma
 def get_pkpd_discount_factors(t_peak, t_end, n_steps):
     """
     Pharmacokinetics/Pharmacodynamics insulin absorption curve.
-    This function models how insulin is absorbed by the body over time.
+    Models how insulin is absorbed and acts over time.
     """
     shape_k = 2
     scale_theta = t_peak / (shape_k - 1)
@@ -18,108 +18,134 @@ def get_pkpd_discount_factors(t_peak, t_end, n_steps):
 
 class StateRewardManager:
     """
-    Manages the state representation, normalization, and reward calculation
-    for the reinforcement learning agent.
+    Manages state construction, normalization, and reward calculation for the RL agent.
     """
     def __init__(self, state_dim):
-        # Store state_dim as an instance attribute
-        self.state_dim = state_dim
-
         self.glucose_history = collections.deque(maxlen=2)
         self.insulin_history = collections.deque(maxlen=160)
-        
-        # Calculate the PK/PD curve parameters once
+        self.reset()
         _, self.F_k = get_pkpd_discount_factors(
             t_peak=55, t_end=480, n_steps=160
         )
-        
-        # FIXED NORMALIZATION PARAMETERS to ensure stable state representation
-        # These are stable estimates of the mean and standard deviation of the state vector.
-        # State: [glucose, rate, iob, carbs]
-        self.state_mean = np.array([140.0, 0.0, 5.0, 20.0])
-        self.state_std = np.array([40.0, 1.5, 3.0, 30.0])
-        
-        # Call reset() to set initial history values
-        self.reset()
+        self.running_state_mean = np.zeros(state_dim)
+        self.running_state_std = np.zeros(state_dim) # Use variance for Welford's algorithm
+        self.n_observations = 0
+
+    def update_normalization_stats(self, state):
+        """
+        Updates running mean and variance using Welford's algorithm for numerical stability.
+        """
+        self.n_observations += 1
+        old_mean = self.running_state_mean.copy()
+        self.running_state_mean += (state - self.running_state_mean) / self.n_observations
+        # Update running variance
+        self.running_state_std += (state - old_mean) * (state - self.running_state_mean)
 
     def get_normalized_state(self, state):
         """
-        Normalizes the state using the fixed mean and standard deviation.
-        This provides a consistent and stable input for the agent.
+        Normalizes the state using the running mean and standard deviation.
         """
-        return (state - self.state_mean) / self.state_std
+        self.update_normalization_stats(state)
+        # Calculate standard deviation from variance, handle n=1 case
+        variance = self.running_state_std / (self.n_observations - 1) if self.n_observations > 1 else np.ones_like(self.running_state_mean)
+        std_dev = np.sqrt(variance)
+        return (state - self.running_state_mean) / (std_dev + 1e-8)
 
     def calculate_iob(self):
         """
         Calculates Insulin On Board (IOB) from history and the PK/PD curve.
         """
-        insulin_array = np.array(list(self.insulin_history)[::-1])
-        iob = np.sum(insulin_array * (1 - self.F_k))
-        return iob
+        history = list(self.insulin_history)
+        # Pad history if shorter than the PK/PD curve length
+        padded_history = np.pad(history, (len(self.F_k) - len(history), 0), 'constant')
+        return np.sum(np.array(padded_history[::-1]) * (1 - self.F_k))
 
     def get_full_state(self, observation, upcoming_carbs=0):
         """
         Constructs the full state vector from the current glucose observation.
-        State vector: [glucose, rate_of_change, insulin_on_board, upcoming_carbs]
+        State vector: [glucose, rate_of_change, insulin_on_board, future_carbs]
         """
         self.glucose_history.append(observation)
-        
-        if len(self.glucose_history) == 2:
-            # Glucose rate of change (mg/dL per minute), assuming 5-minute intervals
-            rate = (self.glucose_history[1] - self.glucose_history[0]) / 5.0
-        else:
-            rate = 0.0
-            
+        rate = (
+            (self.glucose_history[1] - self.glucose_history[0]) / 5.0 # Assuming 5-minute steps
+            if len(self.glucose_history) == 2
+            else 0.0
+        )
         iob = self.calculate_iob()
         return np.array([observation, rate, iob, upcoming_carbs])
 
-    def get_reward(self, state):
+    def get_reward_heuristic_based(self, state):
         """
-        A tiered, "flat-top" reward function to encourage staying within a safe range.
-        - High, flat reward for the optimal zone (90-140).
-        - Small positive reward for the acceptable zone (70-180).
-        - Penalties outside the safe range.
+        The original, well-designed heuristic reward function. Serves as the baseline.
+        This is an 'engineered' solution with multiple components.
         """
         g, rate, iob, _ = state
-        reward = 0
+        # ... (code is unchanged)
+        target_glucose = 100
+        sigma = 20.0
+        proximity_reward = 10.0 * np.exp(-0.5 * ((g - target_glucose) / sigma) ** 2)
+        reward = proximity_reward
+        if g < 70:
+            reward -= 200 * (1 + (70 - g) / 10)
+        if g > 180:
+            reward -= min((g - 180) * 0.2, 50)
+        reward -= 0.5 * (iob ** 2)
+        reward -= 0.1 * (abs(rate) ** 1.5)
+        return reward
 
-        # Define glycemic zones
-        optimal_zone = (90 <= g <= 140)
-        acceptable_zone = (70 <= g < 90) or (140 < g <= 180)
+    def get_reward_risk_based(self, state):
+        """
+        A reward based on the negative Blood Glucose Risk Index (BGRI).
+        This is a continuous, clinically-derived risk function from a 'first principles' approach.
+        """
+        glucose = state[0]
+        if glucose <= 0:
+            glucose = 1.0
+        risk = 1.509 * ((np.log(glucose)**1.084) - 5.381)**2
+        return -risk
 
-        # 1. Assign reward based on the current zone
-        if optimal_zone:
-            # High reward for being in the best range.
-            # The agent has no incentive to make risky changes if it's already here.
-            reward = 1.0
-        elif acceptable_zone:
-            # Smaller positive reward to encourage entering the optimal zone.
-            reward = 0.1
-        else:
-            # Quadratic penalty for being outside the safe range (70-180).
-            if g < 70:
-                reward = -0.01 * (70 - g)**2
-            elif g > 180:
-                reward = -0.001 * (180 - g)**2
+    def get_reward_hybrid_based(self, state):
+        """
+        NEW: A hybrid reward that combines the best of both approaches.
+        Uses the principled risk metric as its core, but adds scaling and shaping.
+        """
+        g, rate, iob, _ = state
+        
+        # 1. Core Component: Scaled Clinical Risk
+        # We start with the BGRI risk and scale it to make the signal stronger.
+        risk_reward = self.get_reward_risk_based(state)
+        SCALING_FACTOR = 10.0 # Hyperparameter to tune
+        reward = risk_reward * SCALING_FACTOR
 
-        # 2. Add extra penalty for severe hypoglycemia
-        if g < 60:
-            reward -= 0.2 * (60 - g)**2
+        # 2. Shaping Terms: Add back the stability-promoting penalties
+        # Penalty for high IOB to discourage insulin stacking
+        reward -= 0.5 * (iob ** 2)
 
-        # 3. Penalize high IOB and rate of change to promote stability
-        reward -= 0.5 * iob       # Slightly increased IOB penalty
-        reward -= 0.2 * rate**2   # Slightly increased rate penalty
+        # Penalty for high glucose volatility to encourage stability
+        reward -= 0.1 * (abs(rate) ** 1.5)
 
         return reward
 
+    def get_reward(self, state, reward_type='heuristic'):
+        """
+        Main reward function that acts as a switcher for experiments.
+        This allows the main training script to select the desired reward function.
+        """
+        if reward_type == 'risk':
+            return self.get_reward_risk_based(state)
+        elif reward_type == 'hybrid':
+            return self.get_reward_hybrid_based(state)
+        else: # Default to your original heuristic function
+            return self.get_reward_heuristic_based(state)
+
     def reset(self):
         """
-        Resets the history for a new episode.
+        Resets the historical data to a safe starting point for a new episode.
         """
         self.glucose_history.clear()
-        # Start with a safe, neutral glucose level
-        self.glucose_history.append(140)
-        
+        for _ in range(2):
+            self.glucose_history.append(140) # Start in a safe mid-range
         self.insulin_history.clear()
         for _ in range(160):
-            self.insulin_history.append(0)
+            self.insulin_history.append(0) # Start with zero insulin history
+

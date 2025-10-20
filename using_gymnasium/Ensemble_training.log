@@ -1,0 +1,282 @@
+
+/kaggle/working/Hruthik/using_gymnasium# python train_ensemble_sac_td3.py
+
+======================================================================
+Starting Ensemble SAC-TD3 Training for 10 patients on 2 GPUs
+======================================================================
+Process for adult#001 starting on device: cuda:0
+Process for adult#002 starting on device: cuda:1
+Process for adult#003 starting on device: cuda:0
+Process for adult#004 starting on device: cuda:1
+--- Starting Ensemble Training for Patient: adult#003 on cuda:0 ---
+--- Starting Ensemble Training for Patient: adult#004 on cuda:1 ---
+--- Starting Ensemble Training for Patient: adult#001 on cuda:0 ---
+--- Starting Ensemble Training for Patient: adult#002 on cuda:1 ---
+[adult#004] Episode 50/250 | Reward: -11176.28 | SAC: 32 TD3: 322
+[adult#003] Episode 50/250 | Reward: -6386.24 | SAC: 42 TD3: 276
+[adult#001] Episode 50/250 | Reward: -34809.66 | SAC: 51 TD3: 2783
+[adult#003] Episode 100/250 | Reward: -5043.29 | SAC: 60 TD3: 3042
+[adult#002] Episode 50/250 | Reward: -1689.03 | SAC: 1591 TD3: 6231
+[adult#003] Episode 150/250 | Reward: -45184.33 | SAC: 334 TD3: 7837
+[adult#004] Episode 100/250 | Reward: -20748.11 | SAC: 1853 TD3: 9630
+[adult#001] Episode 100/250 | Reward: 14542.35 | SAC: 1415 TD3: 15781
+[adult#002] Episode 100/250 | Reward: 8215.05 | SAC: 4932 TD3: 17290
+[adult#003] Episode 200/250 | Reward: 5509.60 | SAC: 3080 TD3: 19491
+[adult#004] Episode 150/250 | Reward: 10703.92 | SAC: 6482 TD3: 19401
+[adult#001] Episode 150/250 | Reward: 8130.47 | SAC: 4745 TD3: 26851
+[adult#002] Episode 150/250 | Reward: 5545.43 | SAC: 8412 TD3: 28210
+[adult#003] Episode 250/250 | Reward: 5865.67 | SAC: 6156 TD3: 30815
+--- Training Finished for adult#003 ---
+Final Agent Usage - SAC: 6156, TD3: 30815
+Saved ensemble model to ./models/ensemble_sac_td3_exp/ensemble_adult-003.pth
+
+--- Starting Evaluation for adult#003 ---
+
+============================================================
+Evaluation Results for adult#003:
+  Time in Range: 74.74%
+  Time Hypo: 25.26%
+  Time Hyper: 0.00%
+  Mean Glucose: 99.82 mg/dL
+  Glucose Std: 31.29 mg/dL
+  SAC Usage: 25.7%
+  TD3 Usage: 74.3%
+============================================================
+
+Process for adult#005 starting on device: cuda:0
+--- Starting Ensemble Training for Patient: adult#005 on cuda:0 ---
+[adult#005] Episode 50/250 | Reward: -8132.99 | SAC: 50 TD3: 810
+[adult#004] Episode 200/250 | Reward: 7539.73 | SAC: 12079 TD3: 28204
+[adult#001] Episode 200/250 | Reward: 7821.29 | SAC: 9680 TD3: 36316
+[adult#002] Episode 200/250 | Reward: 5891.93 | SAC: 14075 TD3: 36947
+[adult#005] Episode 100/250 | Reward: -14487.94 | SAC: 1348 TD3: 10621
+[adult#004] Episode 250/250 | Reward: 8177.22 | SAC: 18863 TD3: 35820
+--- Training Finished for adult#004 ---
+Final Agent Usage - SAC: 18863, TD3: 35820
+Saved ensemble model to ./models/ensemble_sac_td3_exp/ensemble_adult-004.pth
+
+--- Starting Evaluation for adult#004 ---
+
+============================================================
+Evaluation Results for adult#004:
+  Time in Range: 62.28%
+  Time Hypo: 37.72%
+  Time Hyper: 0.00%
+  Mean Glucose: 89.18 mg/dL
+  Glucose Std: 34.38 mg/dL
+  SAC Usage: 36.8%
+  TD3 Usage: 63.2%
+============================================================
+
+Process for adult#006 starting on device: cuda:1
+--- Starting Ensemble Training for Patient: adult#006 on cuda:1 ---
+[adult#006] Episode 50/250 | Reward: -10570.31 | SAC: 40 TD3: 729
+[adult#001] Episode 250/250 | Reward: 6952.69 | SAC: 14671 TD3: 45725
+--- Training Finished for adult#001 ---
+Final Agent Usage - SAC: 14671, TD3: 45725
+Saved ensemble model to ./models/ensemble_sac_td3_exp/ensemble_adult-001.pth
+
+--- Starting Evaluation for adult#001 ---
+
+============================================================
+Evaluation Results for adult#001:
+  Time in Range: 100.00%
+  Time Hypo: 0.00%
+  Time Hyper: 0.00%
+  Mean Glucose: 124.08 mg/dL
+  Glucose Std: 12.00 mg/dL
+  SAC Usage: 25.0%
+  TD3 Usage: 75.0%
+============================================================
+
+Process for adult#007 starting on device: cuda:0
+--- Starting Ensemble Training for Patient: adult#007 on cuda:0 ---
+[adult#007] Episode 50/250 | Reward: -9522.27 | SAC: 33 TD3: 261
+[adult#002] Episode 250/250 | Reward: 7134.01 | SAC: 19882 TD3: 45540
+--- Training Finished for adult#002 ---
+Final Agent Usage - SAC: 19882, TD3: 45540
+Saved ensemble model to ./models/ensemble_sac_td3_exp/ensemble_adult-002.pth
+
+--- Starting Evaluation for adult#002 ---
+
+============================================================
+Evaluation Results for adult#002:
+  Time in Range: 100.00%
+  Time Hypo: 0.00%
+  Time Hyper: 0.00%
+  Mean Glucose: 141.93 mg/dL
+  Glucose Std: 8.90 mg/dL
+  SAC Usage: 38.5%
+  TD3 Usage: 61.5%
+============================================================
+
+Process for adult#008 starting on device: cuda:1
+--- Starting Ensemble Training for Patient: adult#008 on cuda:1 ---
+[adult#005] Episode 150/250 | Reward: 7373.12 | SAC: 4808 TD3: 21561
+[adult#008] Episode 50/250 | Reward: -11122.12 | SAC: 56 TD3: 813
+[adult#006] Episode 100/250 | Reward: -1613.18 | SAC: 1308 TD3: 10535
+[adult#007] Episode 100/250 | Reward: -39027.54 | SAC: 661 TD3: 8157
+[adult#008] Episode 100/250 | Reward: 12006.26 | SAC: 959 TD3: 9633
+[adult#005] Episode 200/250 | Reward: 5872.49 | SAC: 9703 TD3: 31066
+[adult#006] Episode 150/250 | Reward: 6092.02 | SAC: 2990 TD3: 23253
+[adult#007] Episode 150/250 | Reward: 10821.94 | SAC: 4493 TD3: 18714
+[adult#008] Episode 150/250 | Reward: 11062.58 | SAC: 4401 TD3: 20591
+[adult#005] Episode 250/250 | Reward: 3927.12 | SAC: 15897 TD3: 39157
+--- Training Finished for adult#005 ---
+Final Agent Usage - SAC: 15897, TD3: 39157
+Saved ensemble model to ./models/ensemble_sac_td3_exp/ensemble_adult-005.pth
+
+--- Starting Evaluation for adult#005 ---
+
+============================================================
+Evaluation Results for adult#005:
+  Time in Range: 67.80%
+  Time Hypo: 32.20%
+  Time Hyper: 0.00%
+  Mean Glucose: 98.19 mg/dL
+  Glucose Std: 44.09 mg/dL
+  SAC Usage: 37.9%
+  TD3 Usage: 62.1%
+============================================================
+
+Process for adult#009 starting on device: cuda:0
+--- Starting Ensemble Training for Patient: adult#009 on cuda:0 ---
+[adult#009] Episode 50/250 | Reward: -9734.56 | SAC: 112 TD3: 1114
+[adult#006] Episode 200/250 | Reward: -1213.50 | SAC: 5999 TD3: 34644
+[adult#007] Episode 200/250 | Reward: 6777.80 | SAC: 8839 TD3: 28767
+[adult#009] Episode 100/250 | Reward: -46260.10 | SAC: 200 TD3: 6651
+[adult#008] Episode 200/250 | Reward: 6465.14 | SAC: 9329 TD3: 30063
+[adult#006] Episode 250/250 | Reward: -13447.21 | SAC: 10668 TD3: 44375
+--- Training Finished for adult#006 ---
+Final Agent Usage - SAC: 10668, TD3: 44375
+Saved ensemble model to ./models/ensemble_sac_td3_exp/ensemble_adult-006.pth
+
+--- Starting Evaluation for adult#006 ---
+
+============================================================
+Evaluation Results for adult#006:
+  Time in Range: 82.01%
+  Time Hypo: 0.00%
+  Time Hyper: 17.99%
+  Mean Glucose: 134.12 mg/dL
+  Glucose Std: 43.77 mg/dL
+  SAC Usage: 33.0%
+  TD3 Usage: 67.0%
+============================================================
+
+Process for adult#010 starting on device: cuda:1
+--- Starting Ensemble Training for Patient: adult#010 on cuda:1 ---
+[adult#007] Episode 250/250 | Reward: -3684.35 | SAC: 14643 TD3: 37363
+--- Training Finished for adult#007 ---
+Final Agent Usage - SAC: 14643, TD3: 37363
+Saved ensemble model to ./models/ensemble_sac_td3_exp/ensemble_adult-007.pth
+
+--- Starting Evaluation for adult#007 ---
+
+============================================================
+Evaluation Results for adult#007:
+  Time in Range: 82.01%
+  Time Hypo: 12.11%
+  Time Hyper: 5.88%
+  Mean Glucose: 119.43 mg/dL
+  Glucose Std: 41.64 mg/dL
+  SAC Usage: 51.0%
+  TD3 Usage: 49.0%
+============================================================
+
+[adult#009] Episode 150/250 | Reward: -17838.16 | SAC: 690 TD3: 17853
+[adult#010] Episode 50/250 | Reward: -17696.77 | SAC: 76 TD3: 1905
+[adult#008] Episode 250/250 | Reward: 8031.33 | SAC: 13884 TD3: 39908
+--- Training Finished for adult#008 ---
+Final Agent Usage - SAC: 13884, TD3: 39908
+Saved ensemble model to ./models/ensemble_sac_td3_exp/ensemble_adult-008.pth
+
+--- Starting Evaluation for adult#008 ---
+
+============================================================
+Evaluation Results for adult#008:
+  Time in Range: 100.00%
+  Time Hypo: 0.00%
+  Time Hyper: 0.00%
+  Mean Glucose: 141.53 mg/dL
+  Glucose Std: 7.90 mg/dL
+  SAC Usage: 51.4%
+  TD3 Usage: 48.6%
+============================================================
+
+[adult#009] Episode 200/250 | Reward: 12579.19 | SAC: 1954 TD3: 30989
+[adult#010] Episode 100/250 | Reward: -19134.29 | SAC: 1925 TD3: 13005
+[adult#009] Episode 250/250 | Reward: 9927.91 | SAC: 3335 TD3: 44008
+--- Training Finished for adult#009 ---
+Final Agent Usage - SAC: 3335, TD3: 44008
+Saved ensemble model to ./models/ensemble_sac_td3_exp/ensemble_adult-009.pth
+
+--- Starting Evaluation for adult#009 ---
+
+============================================================
+Evaluation Results for adult#009:
+  Time in Range: 54.26%
+  Time Hypo: 45.74%
+  Time Hyper: 0.00%
+  Mean Glucose: 88.21 mg/dL
+  Glucose Std: 44.40 mg/dL
+  SAC Usage: 26.9%
+  TD3 Usage: 73.1%
+============================================================
+
+[adult#010] Episode 150/250 | Reward: 12516.51 | SAC: 3956 TD3: 25374
+[adult#010] Episode 200/250 | Reward: -31812.06 | SAC: 5730 TD3: 37942
+[adult#010] Episode 250/250 | Reward: -5758.59 | SAC: 7498 TD3: 50574
+--- Training Finished for adult#010 ---
+Final Agent Usage - SAC: 7498, TD3: 50574
+Saved ensemble model to ./models/ensemble_sac_td3_exp/ensemble_adult-010.pth
+
+--- Starting Evaluation for adult#010 ---
+
+============================================================
+Evaluation Results for adult#010:
+  Time in Range: 64.71%
+  Time Hypo: 35.29%
+  Time Hyper: 0.00%
+  Mean Glucose: 91.69 mg/dL
+  Glucose Std: 39.01 mg/dL
+  SAC Usage: 14.9%
+  TD3 Usage: 85.1%
+============================================================
+
+
+======================================================================
+--- ALL ENSEMBLE TRAINING PROCESSES COMPLETE ---
+======================================================================
+
+================================================================================
+--- ENSEMBLE SAC-TD3 EVALUATION SUMMARY ---
+================================================================================
+
+--- Performance per Patient ---
+  Patient  Mean Glucose (mg/dL)  Glucose Std (mg/dL)  Time in Range (%)  Time Hypo (%)  Time Hyper (%)  SAC Usage (%)  TD3 Usage (%)
+adult#001            124.083237            11.998599         100.000000       0.000000        0.000000      25.000000      75.000000
+adult#002            141.927811             8.896952         100.000000       0.000000        0.000000      38.541667      61.458333
+adult#003             99.816422            31.290483          74.740484      25.259516        0.000000      25.694444      74.305556
+adult#004             89.175041            34.384022          62.283737      37.716263        0.000000      36.805556      63.194444
+adult#005             98.194588            44.090599          67.796610      32.203390        0.000000      37.931034      62.068966
+adult#006            134.118759            43.767796          82.006920       0.000000       17.993080      32.986111      67.013889
+adult#007            119.434402            41.635876          82.006920      12.110727        5.882353      51.041667      48.958333
+adult#008            141.533463             7.898555         100.000000       0.000000        0.000000      51.388889      48.611111
+adult#009             88.211769            44.395355          54.255319      45.744681        0.000000      26.881720      73.118280
+adult#010             91.688957            39.008385          64.705882      35.294118        0.000000      14.930556      85.069444
+
+
+--- Average Performance Across All Patients ---
+Mean Glucose (mg/dL):  112.82 ± 21.83
+Glucose Std (mg/dL):   30.74 ± 15.22
+Time in Range (%):     78.78 ± 16.93
+Time Hypo (%):         18.83 ± 18.37
+Time Hyper (%):        2.39 ± 5.79
+Average SAC Usage:     34.12%
+Average TD3 Usage:     65.88%
+
+✅ Saved summary to ./results/ensemble_sac_td3_exp/ensemble_summary.csv
+================================================================================
+✅ Saved summary plot to ./results/ensemble_sac_td3_exp/ensemble_summary_plot.png
+✅ Saved learning curve to ./results/ensemble_sac_td3_exp/ensemble_learning_curve.png

@@ -269,7 +269,7 @@ adult#010             91.688957            39.008385          64.705882      35.
 
 --- Average Performance Across All Patients ---
 Mean Glucose (mg/dL):  112.82 ± 21.83
-<!-- Glucose Std (mg/dL):   30.74 ± 15.22 -->
+#Glucose Std (mg/dL):   30.74 ± 15.22 
 Time in Range (%):     78.78 ± 16.93
 Time Hypo (%):         18.83 ± 18.37
 Time Hyper (%):        2.39 ± 5.79

@@ -12,13 +12,14 @@ The chart below illustrates the Percentage of Time in Range (TIR), Hypoglycemia 
 - **Orange:** Time Hypo
 - **Red:** Time Hyper
 
-![Glycemic Control Summary](ensemble_summary_plot.png)
+<img width="4800" height="2700" alt="ensemble_summary_plot" src="https://github.com/user-attachments/assets/c21e467e-3091-4ccd-ac4c-e2e131ffb1a5" />
+
 
 ### 2. Learning Curve
 The training progression shows the Cumulative Reward over 250 episodes. The shaded region represents the standard deviation, indicating the variability in learning across the ensemble.
 - **Convergence:** The agent begins to stabilize and achieve positive rewards consistently around episode 150.
 
-![Learning Curve](ensemble_learning_curve.jpg)
+<img width="3600" height="1800" alt="ensemble_learning_curve" src="https://github.com/user-attachments/assets/3d0a5eda-a383-4621-8838-f16271559fda" />
 
 ---
 

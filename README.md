@@ -21,11 +21,12 @@ Standard Reinforcement Learning struggles with the high variability of human met
 ### 1. The Ensemble Core: SAC-MDN + TD3
 Instead of relying on a single policy, the agent orchestrates two distinct experts:
 
-* **SAC with Mixture Density Networks (SAC-MDN):** * *Role:* The "Stochastic Expert."
+* **SAC with Mixture Density Networks (SAC-MDN):**
+    * *Role:* The "Stochastic Expert."
     * *Innovation:* Replaced standard Gaussian heads with MDNs to model complex, multi-modal glucose probability distributions. This allows the agent to handle high uncertainty (e.g., unexpected meal onset).
 * **Twin Delayed DDPG (TD3):**
     * *Role:* The "Deterministic Expert."
-    * *Role:* Provides stable, low-variance control during fasting or steady-state periods to prevent oscillations.
+    * *Function:* Provides stable, low-variance control during fasting or steady-state periods to prevent oscillations.
 
 ### 2. Dynamic Uncertainty-Based Switching
 The system employs a confidence-aware selection mechanism during training:
@@ -40,9 +41,29 @@ The system employs a confidence-aware selection mechanism during training:
 
 ---
 
+## 🍽️ Realistic Simulation Protocol
+
+To ensure clinical validity, the model was trained using a **stochastic meal generation protocol** based on the schema by *Wang et al. (Biomedicines 2024)*. This ensures the agent is robust against irregular eating habits and variable portion sizes.
+
+### Unannounced Meal Scenario Logic
+The environment generates up to **6 eating events per day** (3 main meals + 3 potential snacks). The timing and carbohydrate content are stochastic, determined by truncated normal distributions and the patient's body weight (BW).
+
+| Meal Event | Probability | Time Window | Mean Carb Amount (g) |
+| :--- | :--- | :--- | :--- |
+| **Breakfast** | 95% | 05:00 - 09:00 | `0.7 × BW` (± 15%) |
+| *Snack 1* | 30% | 09:00 - 10:00 | `0.15 × BW` (± 15%) |
+| **Lunch** | 95% | 10:00 - 14:00 | `1.1 × BW` (± 15%) |
+| *Snack 2* | 30% | 14:00 - 16:00 | `0.15 × BW` (± 15%) |
+| **Dinner** | 95% | 16:00 - 20:00 | `1.25 × BW` (± 15%) |
+| *Snack 3* | 30% | 20:00 - 23:00 | `0.15 × BW` (± 15%) |
+
+* **Uncertainty Factor:** The agent is **blind** to these events. It must infer the onset of a meal purely from the rate of change in glucose levels (CGM derivatives) and react immediately to suppress hyperglycemia.
+
+---
+
 ## 📊 Experimental Results
 
-The model was validated on **10 unique virtual patients** (Adolescents/Adults) using the UVa/Padova simulator (`simglucose`). The agents were subjected to randomized, unannounced meal scenarios.
+The model was validated on **10 unique virtual patients** (Adolescents/Adults) using the UVa/Padova simulator (`simglucose`).
 
 ### Glycemic Control Performance
 The graph below demonstrates the clinical breakdown of Time in Range (Green), Hypoglycemia (Orange), and Hyperglycemia (Red).

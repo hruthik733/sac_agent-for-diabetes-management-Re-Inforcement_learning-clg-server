@@ -4,6 +4,9 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20RL-ee4c2c)
 ![Gymnasium](https://img.shields.io/badge/OpenAI-Gymnasium-green)
 ![Status](https://img.shields.io/badge/Status-Clinical%20Validation%20Passed-success)
+![Domain](https://img.shields.io/badge/Domain-Healthcare_%7C_Type_1_Diabetes-red)
+![Simulator](https://img.shields.io/badge/Simulator-Simglucose_(UVa%2FPadova)-orange)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ## 🏥 Project Abstract
 This project implements a **Fully Closed-Loop Insulin Delivery System** for Type 1 Diabetes management. Addressing one of the most difficult challenges in biomedical control systems, this agent regulates blood glucose levels **without meal announcements** or manual carbohydrate counting.
